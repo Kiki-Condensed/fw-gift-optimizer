@@ -333,7 +333,7 @@ body {
   </div>
 </div>
 
-<div class="recruited-bar" id="recruitedBar" hidden></div>
+<div class="recruited-bar panel-hidden" id="recruitedBar"></div>
 
 <div class="panels">
   <!-- LEFT: items sorted fewest → most recipients -->
@@ -352,10 +352,10 @@ body {
     <div class="panel-scroll" id="itemsList"></div>
   </div>
 
-  <div class="divider" id="panelDivider" hidden></div>
+  <div class="divider panel-hidden" id="panelDivider"></div>
 
   <!-- RIGHT: characters sorted easiest recruit → hardest -->
-  <div class="panel" id="charsPanel" hidden>
+  <div class="panel panel-hidden" id="charsPanel">
     <div class="panel-hdr">
       <span class="panel-hdr-title">Characters</span>
       <span class="panel-hdr-count" id="charCount"></span>
@@ -634,8 +634,8 @@ function toggleRecruited(name) {
 }
 function updateRecruitedBar() {
   const bar = document.getElementById("recruitedBar");
-  if (recruited.size === 0) { bar.hidden = true; return; }
-  bar.hidden = false;
+  if (recruited.size === 0) { bar.classList.add("panel-hidden"); return; }
+  bar.classList.remove("panel-hidden");
   bar.innerHTML = `${recruited.size} recruited (hidden) &nbsp;·&nbsp; <a id="resetRec">unhide all characters</a>`;
   document.getElementById("resetRec").addEventListener("click", () => { recruited.clear(); saveRecruited(); render(); });
 }
@@ -805,9 +805,9 @@ document.getElementById("viewBtns").addEventListener("click", e => {
   const v = b.dataset.view;
   document.querySelectorAll("[data-view]").forEach(x => x.classList.remove("active"));
   b.classList.add("active");
-  document.getElementById("itemsPanel").hidden = (v === "chars");
-  document.getElementById("charsPanel").hidden = (v === "items");
-  document.getElementById("panelDivider").hidden = (v !== "both");
+  document.getElementById("itemsPanel").classList.toggle("panel-hidden", v === "chars");
+  document.getElementById("charsPanel").classList.toggle("panel-hidden", v === "items");
+  document.getElementById("panelDivider").classList.toggle("panel-hidden", v !== "both");
 });
 
 render();
