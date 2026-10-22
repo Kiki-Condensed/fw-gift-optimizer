@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Fire Emblem: Fortune's Weave Gift Optimizer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap">
+
+<style>
+/* ── layout: two-panel side-by-side, fixed controls header ── */
+:root {
+  --bg:           #0e0b12;
+  --surface:      #16111e;
+  --surface2:     #1e1828;
+  --border:       #2c2240;
+  --fg:           #f0eaf8;
+  --muted:        #8a78a0;
+  --accent:       #f090b0;   /* bubblegum pink */
+  --accent-fg:    #280e18;   /* dark text on pink buttons */
+  --secondary:    #9868d8;   /* purple (secondary) */
+  --love:         #f06888;
+  --like:         #5090d8;
+  --r-lavender:   #c090f0;   /* chip: auto/p2/p3 labels */
+  --r-easy:       #50c080;
+  --r-med:        #e0a840;
+  --r-hard:       #e05858;
+  /* obelisk route colors */
+  --cai:          #5898e8;   /* Fox — blue */
+  --cai-fg:       #fff;
+  --dietrich:     #9868d8;   /* Lion — purple */
+  --dietrich-fg:  #fff;
+  --theodora:     #d4b028;   /* Wolf — yellow */
+  --theodora-fg:  #1a1200;   /* dark text on yellow */
+  --leda:         #e048b8;   /* Eagle — magenta */
+  --leda-fg:      #fff;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:           #fdf5fa;
+    --surface:      #ffffff;
+    --surface2:     #f0e8f2;
+    --border:       #ddd0e0;
+    --fg:           #180e1a;
+    --muted:        #7a6888;
+    --accent:       #c02860;
+    --accent-fg:    #ffffff;
+    --secondary:    #6030a8;
+    --love:         #c02848;
+    --like:         #1858b8;
+    --r-lavender:   #6030a8;
+    --r-easy:       #1a7050;
+    --r-med:        #806010;
+    --r-hard:       #b83030;
+    --cai:          #1858c0;
+    --cai-fg:       #fff;
+    --dietrich:     #6030a8;
+    --dietrich-fg:  #fff;
+    --theodora:     #7a6000;
+    --theodora-fg:  #fff;
+    --leda:         #a81870;
+    --leda-fg:      #fff;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg:           #fdf5fa;
+  --surface:      #ffffff;
+  --surface2:     #f0e8f2;
+  --border:       #ddd0e0;
+  --fg:           #180e1a;
+  --muted:        #7a6888;
+  --accent:       #c02860;
+  --accent-fg:    #ffffff;
+  --secondary:    #6030a8;
+  --love:         #c02848;
+  --like:         #1858b8;
+  --r-lavender:   #6030a8;
+  --r-easy:       #1a7050;
+  --r-med:        #806010;
+  --r-hard:       #b83030;
+  --cai:          #1858c0;
+  --cai-fg:       #fff;
+  --dietrich:     #6030a8;
+  --dietrich-fg:  #fff;
+  --theodora:     #7a6000;
+  --theodora-fg:  #fff;
+  --leda:         #a81870;
+  --leda-fg:      #fff;
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 16px;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+
+/* ── HEADER ── */
+.hdr {
+  flex-shrink: 0;
+  padding: 14px 0 0;
+  border-bottom: 1px solid var(--border);
+}
+.hdr-top { display: flex; flex-direction: column; gap: 3px; margin-bottom: 10px; }
+.hdr h1 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; }
+.hdr-sub { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+/* ── CONTROLS ── */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding-bottom: 10px;
+  align-items: center;
+}
+.ctrl { display: flex; align-items: center; gap: 5px; }
+.ctrl-lbl { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; font-family: 'DM Mono', monospace; }
+.btn-row { display: flex; gap: 2px; }
+.btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'DM Sans', sans-serif;
+  transition: color .12s, border-color .12s, background .12s;
+  white-space: nowrap;
+}
+.btn:hover { color: var(--fg); border-color: var(--accent); }
+.btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.rc[data-route="cai"].active       { background: var(--cai);      border-color: var(--cai);      color: var(--cai-fg); }
+.btn.rc[data-route="dietrich"].active  { background: var(--dietrich);  border-color: var(--dietrich); color: var(--dietrich-fg); }
+.btn.rc[data-route="theodora"].active  { background: var(--theodora);  border-color: var(--theodora); color: var(--theodora-fg); }
+.btn.rc[data-route="leda"].active      { background: var(--leda);      border-color: var(--leda);     color: var(--leda-fg); }
+
+/* ── TWO PANELS ── */
+.panels {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  overflow: hidden;
+  min-height: 0;
+}
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+.divider { width: 1px; background: var(--border); flex-shrink: 0; }
+.panel-hdr {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: var(--surface);
+}
+.panel-hdr-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.panel-hdr-count { font-size: 14px; font-weight: 700; color: var(--accent); font-family: 'DM Mono', monospace; }
+.panel-hint { font-size: 13px; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--bg); line-height: 1.5; }
+.panel-hint p { margin-bottom: 4px; }
+.panel-hint p:last-child { margin-bottom: 0; }
+.hint-key { margin-top: 8px; }
+.panel-scroll { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.panel-scroll::-webkit-scrollbar { width: 5px; }
+.panel-scroll::-webkit-scrollbar-track { background: transparent; }
+.panel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── ITEM CARDS ── */
+.item-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color .12s;
+  user-select: none;
+}
+.item-card:hover { border-color: var(--accent); }
+.item-card.open  { border-color: var(--accent); }
+.item-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.item-name { font-weight: 600; font-size: 15px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-bar { flex-shrink: 0; width: 48px; height: 4px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.item-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); transition: width .2s; }
+.item-bar-fill.few  { background: var(--accent); }
+.item-bar-fill.some { background: var(--like); }
+.item-bar-fill.many { background: var(--muted); }
+.count-lbl { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--muted); flex-shrink: 0; }
+
+.item-detail { display: none; margin-top: 8px; flex-direction: column; gap: 3px; }
+.item-card.open .item-detail { display: flex; }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 3px; }
+.char-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 4px 9px; font-size: 13px;
+}
+.chip-tier { font-size: 11px; font-weight: 700; padding: 1px 4px; border-radius: 3px; }
+.chip-love { background: #2a1020; color: var(--love); }
+.chip-like { background: #101828; color: var(--like); }
+.chip-name { font-weight: 600; }
+.chip-req { font-family: 'DM Mono', monospace; font-size: 12px; }
+.chip-r-auto { color: var(--r-lavender); }
+.chip-r-easy { color: var(--r-easy); }
+.chip-r-med  { color: var(--r-med); }
+.chip-r-hard { color: var(--r-hard); }
+.chip-r-p3   { color: var(--r-lavender); }
+
+/* ── CHAR CARDS ── */
+.char-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  cursor: pointer;
+  transition: border-color .12s;
+  user-select: none;
+}
+.char-card:hover { border-color: var(--accent); }
+.char-card.open  { border-color: var(--accent); }
+.char-row { display: flex; align-items: center; gap: 6px; }
+.char-name { font-weight: 700; font-size: 16px; flex: 1; }
+.req-badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px; font-weight: 500;
+  padding: 3px 8px; border-radius: 4px;
+  white-space: nowrap;
+  background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+}
+.char-name-block { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+.gift-count-lbl { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+[hidden] { display: none !important; }
+.rec-btn {
+  flex-shrink: 0;
+  font-size: 13px; font-family: 'DM Mono', monospace;
+  padding: 4px 10px; border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted);
+  cursor: pointer; white-space: nowrap;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.rec-btn:hover { border-color: var(--r-easy); color: var(--r-easy); }
+.recruited-bar {
+  font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace;
+  padding: 4px 0 6px;
+  display: flex; align-items: center; gap: 8px;
+}
+.recruited-bar a { color: var(--accent); text-decoration: none; cursor: pointer; }
+.recruited-bar a:hover { text-decoration: underline; }
+
+.char-detail { display: none; margin-top: 8px; flex-direction: column; gap: 6px; }
+.char-card.open .char-detail { display: flex; }
+.detail-sec-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 2px; }
+.gifts-wrap { display: flex; flex-wrap: wrap; gap: 3px; }
+.gift-tag {
+  font-size: 13px; padding: 3px 9px; border-radius: 4px;
+  border: 1px solid transparent;
+}
+.gift-tag-love { background: #2a1020; color: var(--love); border-color: #4a2038; }
+.gift-tag-like { background: #101828; color: var(--like); border-color: #203048; }
+.route-reqs { font-size: 13px; color: var(--muted); background: var(--surface2); border-radius: 5px; padding: 7px 11px; border: 1px solid var(--border); line-height: 1.9; font-family: 'DM Mono', monospace; }
+.rr-na { opacity: .4; }
+.note-box { font-size: 13px; color: var(--muted); background: var(--surface2); border-radius: 5px; padding: 7px 11px; border: 1px solid var(--border); line-height: 1.5; }
+.key-inline { display: inline-flex; align-items: center; gap: 3px; font-family: 'DM Mono', monospace; font-size: 12px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; margin-left: 4px; white-space: nowrap; }
+.key-s { color: var(--secondary); font-weight: 700; }
+.key-r { color: var(--r-med); font-weight: 700; }
+
+@media (max-width: 600px) {
+  .hdr h1 { font-size: 15px; }
+  .controls { gap: 5px 10px; }
+  .btn { padding: 5px 9px; font-size: 11px; }
+  .panels { flex-direction: column; }
+  .divider { width: auto; height: 1px; }
+  .panel { flex: 1; min-height: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <h1>Fire Emblem: Fortune's Weave Gift Optimizer</h1>
+    <span class="hdr-sub">recruitable characters only · auto-joins excluded · built to help min-max recruitment · work in progress, updated as I play</span>
+  </div>
+  <div class="controls">
+    <div class="ctrl">
+      <span class="ctrl-lbl">Route</span>
+      <div class="btn-row" id="routeBtns">
+        <button class="btn rc active" data-route="cai">Cai</button>
+        <button class="btn rc" data-route="dietrich">Dietrich</button>
+        <button class="btn rc" data-route="theodora">Theodora</button>
+        <button class="btn rc" data-route="leda">Leda</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <span class="ctrl-lbl">Parts</span>
+      <div class="btn-row" id="partBtns">
+        <button class="btn active" data-part="1">I only</button>
+        <button class="btn" data-part="23">II – III</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <span class="ctrl-lbl">View</span>
+      <div class="btn-row" id="viewBtns">
+        <button class="btn active" data-view="both">Both</button>
+        <button class="btn" data-view="items">Items only</button>
+        <button class="btn" data-view="chars">Characters only</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <span class="ctrl-lbl">Tier</span>
+      <div class="btn-row" id="tierBtns">
+        <button class="btn active" data-tier="both">Both</button>
+        <button class="btn" data-tier="love">❤ Loved</button>
+        <button class="btn" data-tier="like">★ Liked</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="recruited-bar" id="recruitedBar" hidden></div>
+
+<div class="panels">
+  <!-- LEFT: items sorted fewest → most recipients -->
+  <div class="panel" id="itemsPanel">
+    <div class="panel-hdr">
+      <span class="panel-hdr-title">Items</span>
+    </div>
+    <div class="panel-hint">
+      <p>Sorted fewest → most recipients.</p>
+      <p>The fraction (e.g. <strong>2/34</strong>) = how many recruitable characters on your route want this item.</p>
+      <p>Use low-count items on those specific characters first. Save high-count items for last.</p>
+      <p>Click to expand: characters sorted lowest → highest Renown required.</p>
+      <p>Mark characters as recruited on the Characters tab to hide them from this list.</p>
+      <p class="hint-key"><span class="key-inline"><span class="key-s">S</span> = Support &nbsp;·&nbsp; <span class="key-r">R</span> = Renown</span></p>
+    </div>
+    <div class="panel-scroll" id="itemsList"></div>
+  </div>
+
+  <div class="divider" id="panelDivider"></div>
+
+  <!-- RIGHT: characters sorted easiest recruit → hardest -->
+  <div class="panel" id="charsPanel">
+    <div class="panel-hdr">
+      <span class="panel-hdr-title">Characters</span>
+      <span class="panel-hdr-count" id="charCount"></span>
+    </div>
+    <div class="panel-hint">Sorted by Renown required on your selected route, lowest first.</div>
+    <div class="panel-scroll" id="charsList"></div>
+  </div>
+</div>
+
+<script>
+const CHARS = [
+  { name:"Cai", part:1, loved:[], liked:["Arrowhead Gem","Crimson Ghosh","Sharp Fishhook"],
+    routes:{cai:"auto",dietrich:null,theodora:null,leda:null} },
+  { name:"Dietrich", part:1, loved:[],
+    liked:["Arrowhead Gem","Board-Game Tactics","Crimson Ghosh","Ginji Cervi","Honey Milk","Honey Pastries","Joint-Relief Gloves","Kitten Figurine","Pastry Cookbook","Protection Figurine","Pure-White Cervi","Spirit Board Game","Training Pillar","Training Weights"],
+    routes:{cai:null,dietrich:"auto",theodora:null,leda:null} },
+  { name:"Theodora", part:1, loved:[],
+    liked:["Dagda Beard Grass","Eastern Black Silk","Eastern Tea Leaves","Horse-Grooming Kit"],
+    routes:{cai:null,dietrich:null,theodora:"auto",leda:null} },
+  { name:"Leda", part:1,
+    loved:["Eastern Black Silk","Eastern Earrings","Tales of Adventure","Volcano Ghosh"],
+    liked:["Aromatic Shosh","Brined Fish Guts","Dagda Beard Grass","Eastern Tea Leaves","Gaudy Bangle","Horse-Grooming Kit","Huge Fish Eyeball","Jade Ghosh","Kitten Figurine","Light Shosh","Magic-Trick Set","Mature Ghosh","Mature Shosh","Pack of Pastels","Rustic Ghosh","Secret Ghosh","Southern Ghosh","Sun Ghosh","Training Bracelet","Young Ghosh"],
+    routes:{cai:null,dietrich:null,theodora:null,leda:"auto"} },
+  { name:"Tialla", part:1,
+    loved:["Eastern Board Game","Ebony Game Board","History of a Master","Morfis Almanac","Portrait of Yu Phas","School Scandal","Tome from Away"],
+    liked:["Alecto Garum","Board-Game Tactics","Eastern Love Story","Eastern Tea Leaves","Everyday Scenes","Garum","Ginji Cervi","Herbal Recipe Guide","Home-Recipe Book","Jamel Milk","Mature Dried Cervi","Pastry Cookbook","Pickled Bulbs","Smooth Garum","Solomon Coffee","Spirit Board Game","Strategy Manuscript","Strong Cervi","Strong Seasonings","Tales of Adventure","Tales of the Arena","The Knight's Suitors","Trader's Handbook","Village Recipes","Weak Cervi","Yarc Milk"],
+    routes:{cai:{s:3,r:9,note:"Cai's Paralogue + 3000G"},dietrich:{s:3,r:9,note:"Cai's Paralogue + 3000G"},theodora:{s:3,r:10,note:"Cai's Paralogue + 3000G"},leda:{s:3,r:8,note:"Cai's Paralogue + 3000G"}} },
+  { name:"Peter", part:1,
+    loved:["Arrowhead Gem","Candy Crystals","Decorative Arrows","History of a Master","Portrait of Yu Phas"],
+    liked:["Ceremonial Spear","Coffee Pastries","Dagda Beard Grass","Eastern Tea Leaves","Flower Painting","Fragrant Pastries","Ginji Cervi","Honey Pastries","Jamel Milk","Kitten Figurine","Mature Dried Cervi","Mellow Pastries","Pastry Cookbook","Saraminian Sweets","Simple Pastries","Strong Cervi","Weak Cervi","Wing Fletching","Yarc Milk"],
+    routes:{cai:{s:3,r:0,note:"Auto Ch.1"},dietrich:{s:3,r:8,note:"Quest"},theodora:{s:3,r:7,note:"Quest"},leda:{s:3,r:10,note:"Quest"}} },
+  { name:"Ultand", part:1,
+    loved:["History of a Master","Legendary Garum","Portrait of Yu Phas","Rancid Garum"],
+    liked:["Blue-Rose Bouquet","Candy Crystals","Ceremonial Spear","Crimson Ghosh","Eastern Love Story","Flower Painting","Full Sewing Kit","Garum","Morfis Almanac","Niiza Garum","Outdoor Cooking Set","Pastry Cookbook"],
+    routes:{cai:{s:0,r:0,note:"Auto Ch.6"},dietrich:{s:3,r:5,note:"Quest"},theodora:{s:3,r:6,note:"Quest"},leda:{s:3,r:8,note:"Quest"}} },
+  { name:"Gaitz", part:1,
+    loved:["Ceremonial Spear","Flower Painting","History of a Master","Morfis Almanac","Portrait of Yu Phas","Tome from Away"],
+    liked:["Arrowhead Gem","Common Coffee","Crimson Ghosh","Horse-Grooming Kit","Joint-Relief Gloves","Orgus Coffee","The Works of Dante","Training Pillar","Training Weights"],
+    routes:{cai:null,dietrich:{s:3,r:10,note:"Bertrand's Paralogue + story ~Ch.12"},theodora:null,leda:null} },
+  { name:"Jester", part:1,
+    loved:["Arrowhead Gem"],
+    liked:["Board-Game Tactics","Common Coffee","Crimson Ghosh","Dual Fish Knives","Joint-Relief Gloves","Orgus Coffee","Pastry Cookbook","Select Coffee","Southern Coffee","Spirit Board Game"],
+    routes:{cai:{s:3,r:10,note:"3x Quest"},dietrich:{s:3,r:6,note:"3x Quest"},theodora:{s:3,r:9,note:"3x Quest"},leda:{s:3,r:10,note:"3x Quest"}} },
+  { name:"Goliath", part:1,
+    loved:["Strategy Manuscript","Volcano Ghosh"],
+    liked:["Aromatic Shosh","Eastern Tea Leaves","Jade Ghosh","Kitten Figurine","Light Shosh","Mature Ghosh","Mature Shosh","Rustic Ghosh","Secret Ghosh","Southern Ghosh","Sturdy Rucksack","Sun Ghosh","Training Bracelet","Wing Fletching","Young Ghosh"],
+    routes:{cai:{s:3,r:7,note:"3x Giant's Meat"},dietrich:{s:3,r:6,note:"3x Giant's Meat"},theodora:{s:3,r:9,note:"3x Giant's Meat"},leda:{s:3,r:10,note:"3x Giant's Meat"}} },
+  { name:"Dante", part:1,
+    loved:["History of a Master","Morfis Almanac","Poems of the Greats","Portrait of Yu Phas","School Scandal","Tome from Away"],
+    liked:["Arrowhead Gem","Common Coffee","Crimson Ghosh","Everyday Scenes","Magic-Trick Set","Pack of Pastels","Select Coffee","Tales of the Arena","The Works of Dante"],
+    routes:{cai:{s:3,r:10,note:"8000G"},dietrich:{s:2,r:8,note:"8000G"},theodora:{s:3,r:6,note:"8000G"},leda:{s:3,r:10,note:"8000G"}} },
+  { name:"Fabio", part:1,
+    loved:["Tales of Adventure","Volcano Ghosh"],
+    liked:["Aromatic Shosh","Brined Fish Guts","Coffee Pastries","Common Coffee","Dagda Beard Grass","Eastern Black Silk","Eastern Tea Leaves","Huge Fish Eyeball","Jade Ghosh","Light Shosh","Mature Ghosh","Mature Shosh","Orgus Coffee","Pack of Pastels","Potted Vegetables","Rustic Ghosh","Secret Ghosh","Select Coffee","Southern Coffee","Southern Ghosh","Sun Ghosh","Young Ghosh"],
+    routes:{cai:null,dietrich:"auto",theodora:null,leda:{s:3,r:9,note:"Dietrich's Paralogue + story ~Ch.12 + item"}} },
+  { name:"Esmeralda", part:1,
+    loved:["Eastern Earrings","Tales of Adventure"],
+    liked:["Alecto Garum","Coffee Pastries","Dagda Beard Grass","Eastern Tea Leaves","Flexible Fishing Rod","Fragrant Pastries","Garum","Gaudy Bangle","Herbal Recipe Guide","Home-Recipe Book","Horse-Grooming Kit","Huge Fish Eyeball","Kitten Figurine","Mellow Pastries","Pastry Cookbook","Saraminian Sweets","Sharp Fishhook","Simple Pastries","Smooth Garum","Strong Seasonings","Training Bracelet","Village Recipes"],
+    routes:{cai:{s:3,r:7,note:"Quest"},dietrich:"auto",theodora:{s:3,r:9,note:"Quest"},leda:{s:3,r:6,note:"Quest"}} },
+  { name:"Mikaela", part:1,
+    loved:["Tales of Adventure","Volcano Ghosh"],
+    liked:["Alecto Garum","Aromatic Shosh","Common Coffee","Eastern Tea Leaves","Garum","Herbal Recipe Guide","Home-Recipe Book","Huge Fish Eyeball","Jade Ghosh","Light Shosh","Mature Ghosh","Mature Shosh","Orgus Coffee","Pastry Cookbook","Rare Spices","Rustic Ghosh","Secret Ghosh","Select Coffee","Southern Coffee","Southern Ghosh","Strong Seasonings","Sun Ghosh","Village Recipes","Wing Fletching","Young Ghosh"],
+    routes:{cai:{s:3,r:5,note:"3000G"},dietrich:"auto",theodora:{s:3,r:8,note:"3000G"},leda:{s:3,r:6,note:"3000G"}} },
+  { name:"Diego", part:1,
+    loved:["Arrowhead Gem","Decorative Arrows"],
+    liked:["Crimson Ghosh","Joint-Relief Gloves","Protection Figurine","Sharp Dagger","Training Pillar","Training Weights"],
+    routes:{cai:{s:3,r:10,note:"Orchel's Paralogue"},dietrich:{s:3,r:9,note:"Orchel's Paralogue"},theodora:{s:2,r:8,note:"Orchel's Paralogue"},leda:{s:3,r:8,note:"Orchel's Paralogue"}} },
+  { name:"Loretta", part:1,
+    loved:[],
+    liked:["Arrowhead Gem","Crimson Ghosh","Ginji Cervi","Honey Milk","Honey Pastries","Joint-Relief Gloves","Mellow Pastries","Pastry Cookbook","Pure-White Cervi","Simple Pastries","Training Pillar","Training Weights"],
+    routes:{cai:{s:3,r:7,note:"3x Iron Sword"},dietrich:{s:3,r:9,note:"3x Iron Sword"},theodora:{s:3,r:5,note:"3x Iron Sword"},leda:{s:3,r:5,note:"3x Iron Sword"}} },
+  { name:"Seteth", part:1,
+    loved:["Poems of the Greats","Strategy Manuscript","Tales of Adventure"],
+    liked:["Common Coffee","Eastern Tea Leaves","Everyday Scenes","Flexible Fishing Rod","Herbal Recipe Guide","Home-Recipe Book","Huge Fish Eyeball","Orgus Coffee","Pastry Cookbook","Select Coffee","Sharp Fishhook","Southern Coffee","Sturdy Rucksack","Trader's Handbook","Village Recipes"],
+    routes:{cai:{s:3,r:6,note:"Quest"},dietrich:null,theodora:{s:3,r:6,note:"Quest"},leda:{s:3,r:10,note:"Quest"}} },
+  { name:"Ninae", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure"],
+    liked:["Arrowhead Gem","Crimson Ghosh","Eastern Black Silk","Eastern Tea Leaves"],
+    routes:{cai:{s:3,r:6,note:"1x Paradise Fish"},dietrich:{s:3,r:8,note:"1x Paradise Fish"},theodora:{s:3,r:6,note:"1x Paradise Fish"},leda:{s:3,r:6,note:"1x Paradise Fish"}} },
+  { name:"Bonaventure", part:1,
+    loved:["Crimson Ghosh","Strategy Manuscript","Volcano Ghosh"],
+    liked:["Ceremonial Spear","Eastern Black Silk","Garum","Home-Recipe Book","Jade Ghosh","Pastry Cookbook","Rare Spices","Secret Ghosh","Strong Seasonings","Sun Ghosh","Tales of the Arena","The Works of Dante","Thick Foreign Tome","Village Recipes"],
+    routes:{cai:null,dietrich:null,theodora:"auto",leda:null} },
+  { name:"Tobias", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure","Volcano Ghosh"],
+    liked:["Alecto Garum","Dagda Beard Grass","Eastern Black Silk","Eastern Tea Leaves","Garum","Herbal Recipe Guide","Home-Recipe Book","Horse-Grooming Kit","Huge Fish Eyeball","Jade Ghosh","Kitten Figurine","Mature Ghosh","Mature Shosh","Pastry Cookbook","Rustic Ghosh","Secret Ghosh","Sharp Fishhook","Smooth Garum","Southern Ghosh","Strong Seasonings","Sturdy Rucksack","Sun Ghosh","Training Bracelet","Village Recipes","Wing Fletching","Young Ghosh"],
+    routes:{cai:null,dietrich:null,theodora:"auto",leda:null} },
+  { name:"Lilian", part:1,
+    loved:["Eastern Earrings","Eastern Tea Leaves","Poems of the Greats","Strategy Manuscript","Tales of Adventure"],
+    liked:["Gaudy Bangle","Herbal Recipe Guide","Home-Recipe Book","Pastry Cookbook","Strong Seasonings","Trader's Handbook","Training Bracelet","Village Recipes","Wing Fletching"],
+    routes:{cai:{s:2,r:8,note:"5000G"},dietrich:{s:2,r:8,note:"5000G"},theodora:"auto",leda:{s:2,r:7,note:"5000G"}} },
+  { name:"Lysander", part:1,
+    loved:[],
+    liked:["Dagda Beard Grass","Eastern Tea Leaves","Horse-Grooming Kit","Mane Ornament","Training Weights","Wing Fletching"],
+    routes:{cai:{s:3,r:8,note:"5x Iron Spear"},dietrich:{s:3,r:6,note:"5x Iron Spear"},theodora:"auto",leda:{s:3,r:7,note:"5x Iron Spear"}} },
+  { name:"Ursula", part:1,
+    loved:["Flower Painting","History of a Master","Pegasus Panorama","Portrait of Yu Phas"],
+    liked:["Arrowhead Gem","Common Coffee","Crimson Ghosh","Eastern Love Story","Kitten Figurine","Mane Ornament","Pack of Pastels","Select Coffee"],
+    routes:{cai:{s:3,r:10,note:"Talimun's Paralogue + answer Yes x3"},dietrich:{s:3,r:7,note:"same"},theodora:{s:3,r:9,note:"same"},leda:null} },
+  { name:"Ludia", part:1,
+    loved:["Eastern Black Silk","Eastern Earrings","Eastern Love Story","Eastern Tea Leaves","Strategy Manuscript","Tales of Adventure"],
+    liked:["Coffee Pastries","Common Coffee","Everyday Scenes","Gaudy Bangle","Herbal Recipe Guide","Home-Recipe Book","Magic-Trick Set","Orgus Coffee","Pack of Pastels","Pastry Cookbook","Select Coffee","Sharp Fishhook","Skin Balm","Southern Coffee","Sturdy Rucksack","Trader's Handbook","Training Bracelet","Village Recipes"],
+    routes:{cai:{s:3,r:9,note:"Quest"},dietrich:{s:3,r:9,note:"Quest"},theodora:{s:3,r:7,note:"Quest"},leda:{s:3,r:7,note:"Quest"}} },
+  { name:"Simon", part:1,
+    loved:["Ceremonial Spear","History of a Master","Portrait of Yu Phas","Rancid Garum"],
+    liked:["Arrowhead Gem","Crimson Ghosh","Dual Fish Knives","Pickled Vegetables","Protection Figurine","Solomon Coffee"],
+    routes:{cai:{s:3,r:8,note:"coin flip (Tails)"},dietrich:{s:3,r:7,note:"coin flip"},theodora:{s:3,r:7,note:"coin flip"},leda:{s:3,r:6,note:"coin flip"}} },
+  { name:"Fianna", part:1,
+    loved:["Arrowhead Gem","Blue-Rose Bouquet","Volcano Ghosh"],
+    liked:["Common Coffee","Crimson Ghosh","Joint-Relief Gloves","Rare Spices","Select Coffee","Skin Balm","Southern Coffee"],
+    routes:{cai:{s:3,r:8,note:"3000G"},dietrich:{s:3,r:7,note:"3000G"},theodora:{s:3,r:9,note:"3000G"},leda:{s:3,r:5,note:"3000G"}} },
+  { name:"Buccar", part:1,
+    loved:["Crimson Ghosh","Dual Fish Knives","Legendary Garum","Rancid Garum"],
+    liked:["Arrowhead Gem","Eastern Tea Leaves","Energizing Ghosh","Garum","Home-Recipe Book","Light Shosh","Mature Ghosh","Mature Shosh","Niiza Garum","Outdoor Cooking Set","Rare Spices","Rustic Ghosh","Village Recipes","Volcano Ghosh","Young Ghosh","Young Shosh"],
+    routes:{cai:null,dietrich:{s:3,r:8,note:"Leda's Paralogue"},theodora:{s:3,r:8,note:"Leda's Paralogue"},leda:"auto"} },
+  { name:"Sirocco", part:1,
+    loved:["Arrowhead Gem","Crimson Ghosh","Flower Painting","History of a Master","Poems of the Greats","Portrait of Yu Phas","Volcano Ghosh"],
+    liked:["Eastern Love Story","Jade Ghosh","Joint-Relief Gloves","Light Shosh","Mature Ghosh","Mature Shosh","Pack of Pastels","Rustic Ghosh","Skin Balm","Tome from Away","Young Ghosh","Young Shosh"],
+    routes:{cai:{s:3,r:9,note:"Quest"},dietrich:{s:3,r:9,note:"Quest"},theodora:{s:1,r:5,note:"Quest"},leda:"auto"} },
+  { name:"Olympia", part:1,
+    loved:["Blue-Rose Bouquet","Eastern Earrings","Eastern Tea Leaves","Flower Painting","History of a Master","Orgus Coffee","Portrait of Yu Phas","Tales of Adventure"],
+    liked:["Coffee Pastries","Common Coffee","Gaudy Bangle","Pack of Pastels","Select Coffee","Skin Balm","Southern Coffee"],
+    routes:{cai:{s:3,r:8,note:"3x Quest"},dietrich:{s:3,r:6,note:"3x Quest"},theodora:{s:3,r:9,note:"3x Quest"},leda:"auto"} },
+  { name:"Mu", part:1,
+    loved:["Candy Crystals","History of a Master","Portrait of Yu Phas"],
+    liked:["Arrowhead Gem","Honey Pastries","Jamel Milk","Outdoor Cooking Set","Pickled Vegetables","Pure-White Cervi","Tome from Away","Weak Cervi","Yarc Milk"],
+    routes:{cai:{s:3,r:9,note:"3x Glirmosa"},dietrich:{s:3,r:7,note:"3x Glirmosa"},theodora:{s:3,r:9,note:"3x Glirmosa"},leda:"auto"} },
+  { name:"Nezha", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure"],
+    liked:["Eastern Tea Leaves","Pickled Bulbs","Sturdy Rucksack","Training Bracelet","Wing Fletching"],
+    routes:{cai:{s:3,r:6,note:"3x Sandworm Meat"},dietrich:{s:3,r:10,note:"3x Sandworm Meat"},theodora:{s:2,r:6,note:"3x Sandworm Meat"},leda:{s:3,r:9,note:"3x Sandworm Meat"}} },
+  { name:"Sha Lan", part:1,
+    loved:['Special "Medicine"'],
+    liked:["Common Coffee","Energizing Ghosh","Niiza Garum","Outdoor Cooking Set","Pastry Cookbook","Select Coffee"],
+    routes:{cai:null,dietrich:{s:3,r:10,note:"Anatolia's Paralogue + questions"},theodora:null,leda:{s:3,r:8,note:"Anatolia's Paralogue + questions"}} },
+  { name:"Dadao", part:1,
+    loved:["Poems of the Greats","Strategy Manuscript","Tales of Adventure"],
+    liked:["Coffee Pastries","Fragrant Pastries","Ginji Cervi","Honey Milk","Honey Pastries","Huge Fish Eyeball","Jamel Milk","Mature Dried Cervi","Mellow Pastries","Pastry Cookbook","Potted Vegetables","Saraminian Sweets","Simple Pastries","Strong Cervi","Weak Cervi","Yarc Milk"],
+    routes:{cai:{s:3,r:7,note:"2x Kothar Gar"},dietrich:{s:3,r:10,note:"2x Kothar Gar"},theodora:{s:2,r:5,note:"2x Kothar Gar"},leda:{s:2,r:5,note:"2x Kothar Gar"}} },
+  { name:"Halvin", part:1,
+    loved:["Eastern Black Silk","Eastern Earrings"],
+    liked:["Crimson Ghosh","Eastern Tea Leaves","Exquisite Ring","Garum","Gaudy Bangle","Jade Panther Figure","Magic-Trick Set","Potted Vegetables","Simple Pastries","Skin Balm","Village Recipes"],
+    routes:{cai:{s:3,r:9,note:"10x Dates"},dietrich:{s:3,r:9,note:"10x Dates"},theodora:{s:3,r:7,note:"10x Dates"},leda:{s:3,r:7,note:"10x Dates"}} },
+  { name:"Guzran", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure","Volcano Ghosh"],
+    liked:["Aromatic Shosh","Common Coffee","Eastern Tea Leaves","Huge Fish Eyeball","Jade Ghosh","Light Shosh","Mature Ghosh","Mature Shosh","Orgus Coffee","Rustic Ghosh","Secret Ghosh","Select Coffee","Southern Coffee","Southern Ghosh","Strong Seasonings","Sun Ghosh","Wing Fletching","Young Ghosh","Young Shosh"],
+    routes:{cai:"auto",dietrich:{s:3,r:8},theodora:{s:3,r:8},leda:{s:1,r:3}} },
+  { name:"Yang Jie", part:1,
+    loved:["Eastern Tea Leaves","Poems of the Greats","Strategy Manuscript","Tales of Adventure","Volcano Ghosh"],
+    liked:["Aromatic Shosh","Coffee Pastries","Common Coffee","Flexible Fishing Rod","Herbal Recipe Guide","Home-Recipe Book","Huge Fish Eyeball","Jade Ghosh","Kitten Figurine","Light Shosh","Mature Ghosh","Mature Shosh","Orgus Coffee","Pastry Cookbook","Rustic Ghosh","Secret Ghosh","Select Coffee","Sharp Fishhook","Southern Coffee","Southern Ghosh","Sun Ghosh","The Works of Dante","Trader's Handbook","Village Recipes","Young Ghosh"],
+    routes:{cai:{s:2,r:3,note:"answer questions"},dietrich:"auto",theodora:{s:3,r:9,note:"answer questions (conflicting data)"},leda:{s:0,r:0,note:"no req listed"}} },
+  { name:"Io", part:1, loved:[],
+    liked:["Arrowhead Gem","Board-Game Tactics","Common Coffee","Crimson Ghosh","Horse-Grooming Kit","Joint-Relief Gloves","Kitten Figurine","Mane Ornament","Protection Figurine","Spirit Board Game","Sturdy Rucksack","Training Pillar","Training Weights"],
+    routes:{cai:{s:3,r:10,note:"4000G"},dietrich:{s:2,r:3,note:"800G"},theodora:{s:3,r:10,note:"4000G"},leda:{s:1,r:6,note:"1500G"}} },
+  { name:"Peppe", part:1,
+    loved:["Arrowhead Gem"],
+    liked:["Board-Game Tactics","Common Coffee","Crimson Ghosh","Joint-Relief Gloves","Kitten Figurine","Magic-Trick Set","Outdoor Cooking Set","Pack of Pastels","Pastry Cookbook","Protection Figurine","Sharp Fishhook","Spirit Board Game","Sturdy Rucksack","The Works of Dante","Training Pillar","Training Weights"],
+    routes:{cai:{s:1,r:9,note:"Bertrand's Paralogue"},dietrich:{s:3,r:8},theodora:{s:2,r:7},leda:null} },
+  { name:"Noctula", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure"],
+    liked:["Eastern Tea Leaves","Protection Figurine","Sturdy Rucksack","Training Bracelet","Wing Fletching"],
+    routes:{cai:{s:1,r:4},dietrich:{s:1,r:6},theodora:{s:1,r:3},leda:{s:3,r:8}} },
+  { name:"Sofia", part:1,
+    loved:["Blue-Rose Bouquet","Dual Fish Knives","Volcano Ghosh"],
+    liked:["Arrowhead Gem","Common Coffee","Crimson Ghosh","Ginji Cervi","Honey Milk","Honey Pastries","Jamel Milk","Kitten Figurine","Magic-Trick Set","Niiza Garum","Outdoor Cooking Set","Pack of Pastels","Pastry Cookbook","Pickled Vegetables","Protection Figurine","Pure-White Cervi","Sharp Fishhook","Yarc Milk"],
+    routes:{cai:{s:3,r:9},dietrich:{s:3,r:9},theodora:"auto",leda:{s:3,r:7}} },
+  { name:"Catania", part:1,
+    loved:["Eastern Black Silk","Eastern Earrings","Eastern Tea Leaves","Tales of Adventure"],
+    liked:["Coffee Pastries","Common Coffee","Dagda Beard Grass","Gaudy Bangle","Horse-Grooming Kit","Kitten Figurine","Magic-Trick Set","Orgus Coffee","Pack of Pastels","Select Coffee","Southern Coffee"],
+    routes:{cai:{s:3,r:10},dietrich:{s:1,r:8},theodora:{s:3,r:7},leda:"auto"} },
+  { name:"Nydine", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure"],
+    liked:["Eastern Love Story","Eastern Tea Leaves","Kitten Figurine","Sturdy Rucksack","Training Bracelet","Training Weights","Wing Fletching"],
+    routes:{cai:{s:1,r:6,note:"2x Bronze Axe"},dietrich:{s:2,r:5,note:"2x Bronze Axe"},theodora:{s:3,r:5,note:"3x Iron Axe"},leda:{s:3,r:10,note:"3x Iron Axe"}} },
+  { name:"Zarcone", part:1,
+    loved:["Eastern Tea Leaves"],
+    liked:["Eastern Earrings","Gaudy Bangle","Pickled Bulbs","Potted Vegetables","Strategy Manuscript","Tales of Adventure","Wing Fletching"],
+    routes:{cai:{s:3,r:8,note:"negotiate"},dietrich:{s:3,r:7,note:"negotiate"},theodora:{s:1,r:4,note:"negotiate"},leda:{s:2,r:5,note:"negotiate"}} },
+  { name:"Majide", part:1,
+    loved:["Arrowhead Gem","Crimson Ghosh","Dual Fish Knives"],
+    liked:["Crimson Ghosh","Dual Fish Knives","Joint-Relief Gloves","Light Shosh","Mature Ghosh","Mature Shosh","Rustic Ghosh","Training Pillar","Training Weights","Volcano Ghosh","Young Ghosh","Young Shosh"],
+    routes:{cai:{s:2,r:5,note:"answer x3"},dietrich:{s:3,r:8,note:"answer x3"},theodora:{s:3,r:8,note:"answer x3"},leda:{s:3,r:9,note:"answer x3"}} },
+  { name:"Benditz", part:1,
+    loved:["Eastern Black Silk","Eastern Earrings","Eastern Tea Leaves","Strategy Manuscript","Tales of Adventure"],
+    liked:["Coffee Pastries","Common Coffee","Eastern Love Story","Gaudy Bangle","Orgus Coffee","Select Coffee","Southern Coffee","Wing Fletching"],
+    routes:{cai:{s:3,r:9},dietrich:{s:2,r:7},theodora:{s:1,r:8},leda:{s:3,r:7}} },
+  { name:"Inyoni", part:1,
+    loved:["Strategy Manuscript","Tales of Adventure"],
+    liked:["Eastern Black Silk","Eastern Tea Leaves","Huge Fish Eyeball","Sharp Fishhook","Sturdy Rucksack","Training Bracelet","Wing Fletching"],
+    routes:{cai:{s:3,r:8,note:"6000G"},dietrich:{s:3,r:8,note:"6000G"},theodora:{s:1,r:9,note:"4000G"},leda:{s:1,r:7,note:"3000G"}} },
+  { name:"Jasmine", part:1, loved:[],
+    liked:["Arrowhead Gem","Crimson Ghosh","Dual Fish Knives","Honey Pastries","Jamel Milk","Joint-Relief Gloves","Kitten Figurine","Magic-Trick Set","Niiza Garum","Outdoor Cooking Set","Pack of Pastels","Pastry Cookbook","Protection Figurine","Pure-White Cervi","Rare Spices","Sturdy Rucksack","Training Pillar","Training Weights"],
+    routes:{cai:{s:1,r:8,note:"2000G"},dietrich:{s:3,r:9,note:"5000G"},theodora:{s:3,r:8,note:"5000G"},leda:{s:2,r:4,note:"500G"}} },
+  { name:"Alexandra", part:1,
+    loved:["Eastern Earrings","Strategy Manuscript","Tales of Adventure"],
+    liked:["Alecto Garum","Dagda Beard Grass","Garum","Gaudy Bangle","Herbal Recipe Guide","Home-Recipe Book","Horse-Grooming Kit","Kitten Figurine","Mane Ornament","Pastry Cookbook","Smooth Garum","Strong Seasonings","Sturdy Rucksack","Training Bracelet","Village Recipes","Wing Fletching"],
+    routes:{cai:{s:2,r:7},dietrich:{s:3,r:8},theodora:{s:1,r:6},leda:{s:3,r:10}} },
+  { name:"Nuzzuo", part:1,
+    loved:["Arrowhead Gem","Dual Fish Knives"],
+    liked:["Common Coffee","Crimson Ghosh","Joint-Relief Gloves","Kitten Figurine","Niiza Garum","Outdoor Cooking Set","Pickled Vegetables","Protection Figurine","Select Coffee","Sturdy Rucksack","Training Bracelet","Training Pillar","Training Weights"],
+    routes:{cai:{s:2,r:6,note:"3x Iron Bow"},dietrich:{s:1,r:9,note:"2x Iron Bow"},theodora:{s:1,r:6,note:"3x Iron Bow"},leda:{s:3,r:9,note:"3x Iron Bow"}} },
+  { name:"Kiroc", part:1,
+    loved:["Arrowhead Gem","Crimson Ghosh","Volcano Ghosh"],
+    liked:["Common Coffee","Joint-Relief Gloves","Light Shosh","Mature Ghosh","Mature Shosh","Rustic Ghosh","Select Coffee","Sharp Fishhook","Southern Coffee","Training Pillar","Training Weights","Young Ghosh","Young Shosh"],
+    routes:{cai:{s:3,r:8,note:"8x Pure Water"},dietrich:{s:1,r:4,note:"3x Pure Water"},theodora:{s:3,r:10,note:"8x Pure Water"},leda:{s:1,r:4,note:"3x Pure Water"}} },
+  // Part II
+  { name:"Creek", part:2,
+    loved:["History of a Master"],
+    liked:["Sharp Dagger","The Works of Dante"],
+    routes:{cai:null,dietrich:"p2",theodora:null,leda:"p2"},
+    note:"Part II Ch.2. Requires 'My Late Sister's Accessory' subquest in Part I (deadline 10/4)." },
+  { name:"Nathan", part:2,
+    loved:["History of a Master"],
+    liked:["Secret Ghosh","Sharp Dagger","Sun Ghosh"],
+    routes:{cai:null,dietrich:"p2",theodora:null,leda:"p2"},
+    note:"Part II Ch.3. Creek must be recruited and land the killing blow on Nathan." },
+  // Part III
+  { name:"Orchel", part:3,
+    loved:["Dual Fish Knives","History of a Master","Pegasus Panorama","Poems of the Greats","Portrait of Yu Phas","School Scandal"],
+    liked:["Crimson Bull Figure","Garum","Herbal Recipe Guide","Home-Recipe Book","Horse-Grooming Kit","Jade Panther Figure","Kitten Figurine","Outdoor Cooking Set","Strong Seasonings","Tales of Adventure","Tales of the Arena","The Knight's Suitors","The Works of Dante","Trader's Handbook","Village Recipes"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Part III. Complete Orchel's Paralogue in Part I." },
+  { name:"Talimun", part:3,
+    loved:["Blue-Rose Bouquet","Crimson Ghosh","Flower Painting","History of a Master","Portrait of Yu Phas","Volcano Ghosh"],
+    liked:["Arrowhead Gem","Ceremonial Spear","Crimson Bull Figure","Jade Panther Figure","Secret Ghosh","Southern Ghosh"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Part III. Complete Talimun's Paralogue in Part I." },
+  { name:"Anatolia", part:3,
+    loved:["History of a Master","Morfis Almanac","Tales of Adventure"],
+    liked:["Ahm Lu Cloth","Candy Crystals","Eastern Black Silk","Eastern Tea Leaves","Magic-Trick Set","Protection Figurine","Tome from Away"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Part III. Complete Anatolia's Paralogue in Part I." },
+  { name:"Bertrand", part:3,
+    loved:["Dual Fish Knives","Ebony Game Board","Legendary Garum","Rancid Garum","Strategy Manuscript"],
+    liked:["Ahm Lu Cloth","Alecto Garum","Concentrated Garum","Morfis Almanac","Smooth Garum","Sturdy Rucksack","Tales of Adventure","Tome from Away","Training Bracelet"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Guest in Part II; auto-joins Part III." },
+  { name:"Centurio", part:3,
+    loved:["Ceremonial Spear","Eastern Board Game","History of a Master","Portrait of Yu Phas","School Scandal","Strategy Manuscript"],
+    liked:["Antique Medal","Board-Game Tactics","Spirit Board Game","Tales of the Arena","Trader's Handbook","Training Pillar","Training Weights"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Part III Second Section — complete 'Rescue Centurio' quest." },
+  { name:"Hong Hua", part:3,
+    loved:["Fodlan Tea","History of a Master","Portrait of Yu Phas"],
+    liked:["Ahm Lu Cloth","Candy Crystals","Coffee Pastries","Common Coffee","Flower Painting","Magic-Trick Set","Mature Dried Cervi","Mellow Pastries","Morfis Almanac","Orgus Coffee","Select Coffee","Southern Coffee","Strong Cervi","Tome from Away","Weak Cervi"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Prologue + Part III." },
+  { name:"Troy", part:3,
+    loved:["History of a Master","Morfis Almanac","Portrait of Yu Phas","Rancid Garum"],
+    liked:["Ahm Lu Cloth","Board-Game Tactics","Candy Crystals","Flower Painting","Fodlan Tea","Magic-Trick Set","Mature Dried Cervi","Spirit Board Game","Strong Cervi","Tome from Away","Weak Cervi"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Part III." },
+  { name:"Aswan", part:3, loved:[],
+    liked:["Full Sewing Kit","Pack of Pastels","The Works of Dante"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Part III Fifth Section — unless they die as a guest in Part II Ch.3." },
+  { name:"Tahonia", part:3,
+    loved:["History of a Master"],
+    liked:["Full Sewing Kit","The Works of Dante"],
+    routes:{cai:"p3",dietrich:"p3",theodora:"p3",leda:"p3"},
+    note:"Auto-joins Part III Fifth Section — unless they die as a guest in Part II Ch.3." },
+];
+// Nathan = appears in gift guides with data (loved: History of a Master; liked: Secret Ghosh, Sharp Dagger, Sun Ghosh) but route/recruitment data unknown — excluded until verified in-game. Eshmel/Klapka = no gift data, excluded.
+
+const ROUTE_KEYS = ["cai","dietrich","theodora","leda"];
+const ROUTE_COLORS = {cai:"var(--cai)",dietrich:"var(--dietrich)",theodora:"var(--theodora)",leda:"var(--leda)"};
+let S = { route:"cai", part:1, tier:"both", openItem:null, openChar:null };
+
+let recruited = new Set();
+try { recruited = new Set(JSON.parse(localStorage.getItem("fw-recruited") || "[]")); } catch(e) {}
+function saveRecruited() { try { localStorage.setItem("fw-recruited", JSON.stringify([...recruited])); } catch(e) {} }
+function toggleRecruited(name) {
+  if (recruited.has(name)) recruited.delete(name); else recruited.add(name);
+  saveRecruited();
+  render();
+}
+function updateRecruitedBar() {
+  const bar = document.getElementById("recruitedBar");
+  if (recruited.size === 0) { bar.hidden = true; return; }
+  bar.hidden = false;
+  bar.innerHTML = `${recruited.size} recruited (hidden) &nbsp;·&nbsp; <a id="resetRec">unhide all characters</a>`;
+  document.getElementById("resetRec").addEventListener("click", () => { recruited.clear(); saveRecruited(); render(); });
+}
+
+function reqVal(r) {
+  if (!r) return 999;
+  if (r === "auto") return -1;
+  if (r === "p3") return 900;
+  if (r === "p2") return 800;
+  return r.r ?? 0;
+}
+function bestReq(char, route) {
+  return char.routes[route] || null;
+}
+function reqLabel(r) {
+  if (!r) return "N/A";
+  if (r === "auto") return "Auto";
+  if (r === "p3") return "Part III";
+  if (r === "p2") return "Part II";
+  const base = `S${r.s} R${r.r}`;
+  return r.note ? base + " · " + r.note : base;
+}
+function reqBadgeClass(r) { return ""; }
+function chipReqClass(r) {
+  if (!r) return "";
+  if (r === "auto") return "chip-r-auto";
+  if (r === "p3" || r === "p2") return "chip-r-p3";
+  const rv = r.r ?? 0;
+  if (rv <= 5) return "chip-r-easy";
+  if (rv <= 8) return "chip-r-med";
+  return "chip-r-hard";
+}
+function isAvail(char) {
+  if (recruited.has(char.name)) return false;
+  if (S.part === 1 && char.part !== 1) return false;
+  if (S.part === 23 && char.part < 2) return false;
+  const req = char.routes[S.route];
+  if (!req) return false;
+  if (req === "auto") return false; // auto-joins don't need gifts to recruit
+  return true;
+}
+function getGifts(char) {
+  if (S.tier === "love") return char.loved.map(g=>({g,t:"love"}));
+  if (S.tier === "like") return char.liked.map(g=>({g,t:"like"}));
+  return [...char.loved.map(g=>({g,t:"love"})), ...char.liked.map(g=>({g,t:"like"}))];
+}
+function isLoved(char, item) { return char.loved.includes(item); }
+
+function availChars() { return CHARS.filter(isAvail); }
+
+function buildItemMap() {
+  const map = {};
+  for (const char of availChars()) {
+    for (const {g,t} of getGifts(char)) {
+      if (!map[g]) map[g] = [];
+      map[g].push({char, tier: t});
+    }
+  }
+  return map;
+}
+
+function renderItems() {
+  const map = buildItemMap();
+  const total = availChars().length;
+  const items = Object.entries(map).sort((a,b) => a[1].length - b[1].length || a[0].localeCompare(b[0]));
+  const el = document.getElementById("itemsList");
+  el.innerHTML = "";
+  for (const [item, chars] of items) {
+    const pct = chars.length / Math.max(total,1);
+    const cls = pct <= .15 ? "few" : pct <= .5 ? "some" : "many";
+    const isOpen = S.openItem === item;
+    const sorted = [...chars].sort((a,b) => reqVal(bestReq(a.char, S.route)) - reqVal(bestReq(b.char, S.route)));
+    const card = document.createElement("div");
+    card.className = "item-card" + (isOpen ? " open" : "");
+    const chipsHtml = sorted.map(({char,tier}) => {
+      const r = bestReq(char, S.route);
+      const rl = r && r !== "p3" && r !== "p2" && r !== "auto" ? `S${r.s}R${r.r}` : (r || "?");
+      return `<span class="char-chip">
+        <span class="chip-tier ${tier==="love"?"chip-love":"chip-like"}">${tier==="love"?"❤":"★"}</span>
+        <span class="chip-name">${char.name}</span>
+        <span class="chip-req ${chipReqClass(r)}">${typeof r === "object" && r ? `S${r.s}R${r.r}` : (r||"")}</span>
+      </span>`;
+    }).join("");
+    card.innerHTML = `<div class="item-row">
+      <span class="item-name">${item}</span>
+      <div class="item-bar"><div class="item-bar-fill ${cls}" style="width:${Math.max(5,Math.round(pct*100))}%"></div></div>
+      <span class="count-lbl">${chars.length}/${total}</span>
+    </div>
+    <div class="item-detail"><div class="chips-wrap">${chipsHtml}</div></div>`;
+    card.addEventListener("click", () => { S.openItem = isOpen ? null : item; renderItems(); });
+    el.appendChild(card);
+  }
+}
+
+function renderChars() {
+  const chars = availChars().sort((a,b) => {
+    const ra = reqVal(bestReq(a, S.route)), rb = reqVal(bestReq(b, S.route));
+    if (ra !== rb) return ra - rb;
+    return getGifts(a).length - getGifts(b).length;
+  });
+  const el = document.getElementById("charsList");
+  el.innerHTML = "";
+  for (const char of chars) {
+    const req = bestReq(char, S.route);
+    const isOpen = S.openChar === char.name;
+    const gifts = getGifts(char);
+    const loved = gifts.filter(x=>x.t==="love");
+    const liked = gifts.filter(x=>x.t==="like");
+    // per-route req table for detail
+    const routeReqHtml = ROUTE_KEYS.map(k => {
+      const rv = char.routes[k];
+      const lab = rv ? reqLabel(typeof rv==="object"?rv:rv) : "N/A";
+      const color = rv ? ROUTE_COLORS[k] : "var(--border)";
+      return `<span style="color:${color}" class="${!rv?'rr-na':''}">${k[0].toUpperCase()+k.slice(1)}: ${lab}</span>`;
+    }).join(" &nbsp; ");
+    const card = document.createElement("div");
+    card.className = "char-card" + (isOpen ? " open" : "");
+    card.innerHTML = `<div class="char-row">
+      <div class="char-name-block">
+        <span class="char-name">${char.name}</span>
+        <span class="gift-count-lbl">${gifts.length} gift${gifts.length !== 1 ? "s" : ""}</span>
+      </div>
+      ${req ? `<span class="req-badge">${req==="p3"?"Part III":req==="p2"?"Part II":`S${req.s} R${req.r}`}</span>` : ""}
+      <button class="rec-btn" data-rec="${char.name}">✓ recruited</button>
+    </div>
+    <div class="char-detail">
+      ${loved.length ? `<div><div class="detail-sec-lbl">❤ Loved</div><div class="gifts-wrap">${loved.map(x=>`<span class="gift-tag gift-tag-love">${x.g}</span>`).join("")}</div></div>` : ""}
+      ${liked.length ? `<div><div class="detail-sec-lbl">★ Really Liked</div><div class="gifts-wrap">${liked.map(x=>`<span class="gift-tag gift-tag-like">${x.g}</span>`).join("")}</div></div>` : ""}
+      <div class="route-reqs">${routeReqHtml}</div>
+      ${char.note ? `<div class="note-box">ℹ ${char.note}</div>` : ""}
+    </div>`;
+    card.addEventListener("click", e => {
+      if (e.target.closest(".rec-btn")) return;
+      S.openChar = isOpen ? null : char.name; renderChars();
+    });
+    card.querySelector(".rec-btn").addEventListener("click", e => { e.stopPropagation(); toggleRecruited(char.name); });
+    el.appendChild(card);
+  }
+}
+
+function render() { renderItems(); renderChars(); updateRecruitedBar(); }
+
+document.getElementById("routeBtns").addEventListener("click", e => {
+  const b = e.target.closest("[data-route]"); if (!b) return;
+  S.route = b.dataset.route;
+  document.querySelectorAll("[data-route]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  render();
+});
+document.getElementById("partBtns").addEventListener("click", e => {
+  const b = e.target.closest("[data-part]"); if (!b) return;
+  S.part = b.dataset.part === "1" ? 1 : 23;
+  document.querySelectorAll("[data-part]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  render();
+});
+document.getElementById("tierBtns").addEventListener("click", e => {
+  const b = e.target.closest("[data-tier]"); if (!b) return;
+  S.tier = b.dataset.tier;
+  document.querySelectorAll("[data-tier]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  render();
+});
+
+document.getElementById("viewBtns").addEventListener("click", e => {
+  const b = e.target.closest("[data-view]"); if (!b) return;
+  const v = b.dataset.view;
+  document.querySelectorAll("[data-view]").forEach(x => x.classList.remove("active"));
+  b.classList.add("active");
+  document.getElementById("itemsPanel").hidden = (v === "chars");
+  document.getElementById("charsPanel").hidden = (v === "items");
+  document.getElementById("panelDivider").hidden = (v !== "both");
+});
+
+render();
+</script>
+</body>
+</html>
