@@ -1,8 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
 <title>Fire Emblem: Fortune's Weave Gift Optimizer</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap">
 
@@ -247,7 +243,7 @@ body {
 }
 .char-name-block { display: flex; flex-direction: column; gap: 1px; flex: 1; }
 .gift-count-lbl { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
-[hidden] { display: none !important; }
+.panel-hidden { display: none !important; }
 .rec-btn {
   flex-shrink: 0;
   font-size: 13px; font-family: 'DM Mono', monospace;
@@ -284,16 +280,17 @@ body {
 .key-r { color: var(--r-med); font-weight: 700; }
 
 @media (max-width: 600px) {
+  body { height: auto; min-height: 100dvh; overflow-y: auto; }
   .hdr h1 { font-size: 15px; }
   .controls { gap: 5px 10px; }
   .btn { padding: 5px 9px; font-size: 11px; }
-  .panels { flex-direction: column; }
+  [data-view="both"] { display: none; }
+  .panels { flex-direction: column; overflow: visible; flex: none; }
   .divider { width: auto; height: 1px; }
-  .panel { flex: 1; min-height: 0; }
+  .panel { flex: none; overflow: visible; }
+  .panel-scroll { overflow-y: visible; flex: none; }
 }
 </style>
-</head>
-<body>
 
 <div class="hdr">
   <div class="hdr-top">
@@ -814,6 +811,12 @@ document.getElementById("viewBtns").addEventListener("click", e => {
 });
 
 render();
+
+// On mobile, default to Items only (Both is hidden)
+if (window.innerWidth <= 600) {
+  document.querySelectorAll("[data-view]").forEach(x => x.classList.remove("active"));
+  document.querySelector("[data-view='items']").classList.add("active");
+  document.getElementById("charsPanel").hidden = true;
+  document.getElementById("panelDivider").hidden = true;
+}
 </script>
-</body>
-</html>
