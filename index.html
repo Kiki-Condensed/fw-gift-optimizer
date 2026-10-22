@@ -317,8 +317,8 @@ body {
     <div class="ctrl">
       <span class="ctrl-lbl">View</span>
       <div class="btn-row" id="viewBtns">
-        <button class="btn active" data-view="both">Both</button>
-        <button class="btn" data-view="items">Items only</button>
+        <button class="btn" data-view="both">Both</button>
+        <button class="btn active" data-view="items">Items only</button>
         <button class="btn" data-view="chars">Characters only</button>
       </div>
     </div>
@@ -352,10 +352,10 @@ body {
     <div class="panel-scroll" id="itemsList"></div>
   </div>
 
-  <div class="divider" id="panelDivider"></div>
+  <div class="divider" id="panelDivider" hidden></div>
 
   <!-- RIGHT: characters sorted easiest recruit → hardest -->
-  <div class="panel" id="charsPanel">
+  <div class="panel" id="charsPanel" hidden>
     <div class="panel-hdr">
       <span class="panel-hdr-title">Characters</span>
       <span class="panel-hdr-count" id="charCount"></span>
@@ -812,11 +812,4 @@ document.getElementById("viewBtns").addEventListener("click", e => {
 
 render();
 
-// On mobile, default to Items only (Both is hidden)
-if (window.innerWidth <= 600) {
-  document.querySelectorAll("[data-view]").forEach(x => x.classList.remove("active"));
-  document.querySelector("[data-view='items']").classList.add("active");
-  document.getElementById("charsPanel").hidden = true;
-  document.getElementById("panelDivider").hidden = true;
-}
 </script>
